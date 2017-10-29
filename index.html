@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>   
+
+<script src="id.js"></script>
+<script src="nom1.js"></script>
+<script src="nom2.js"></script>
+<script src="emphra.js"></script>
+<script src="atc1.js"></script>
+<script src="atc2.js"></script>
+<script src="pharma.js"></script>
+
+
+
+
+<style> /* set the CSS */
+
+.line1 {
+  fill: none;
+  stroke: blue;
+  stroke-width: 2px;
+}
+    
+.line2 {
+  fill: none;
+  stroke: red;
+  stroke-width: 2px;
+}
+    
+.line3 {
+  fill: none;
+  stroke: green;
+  stroke-width: 2px;
+}
+    
+    
+ #linechart {
+    width: 90vw;
+    height: 70vh;
+}   
+    
+    
+    
+    
+
+</style>
+<body>
+
+<!-- load the d3.js library -->    	
+<script src="https://d3js.org/d3.v4.min.js"></script>
+    
+    
+    
+<script>
+
+    var dbtotal;
+    var references;
+    var graphtest = false;
+    var selector = "total";
+    var parseTime = d3.timeParse("%Y-%m");
+    
+    
+var svg;
+    
+    
+    
+      window.onload = function () { 
+          
+          
+          
+          
+            svg = d3.select("body").append("svg")
+           .attr("id","linechart");
+          
+      
+    d3.queue()
+        .defer(d3.json,"values.js")
+        .defer(d3.json,"references.js")
+        .awaitAll(ready);  
+        
+    
+                initAutocomplete();
+
+      
+      
+      };  
+    
+    
+    
+function ready (error,data){    
+    dbtotal = data[0];
+    references = data[1];
+       
+    
+
+       
+};
+    
+    
+  function  search(val,search){
+      
+
+//      
+//      console.log(val);
+//      console.log(search);
+//      
+      
+      switch(val) {
+    case "1":
+        var testExist=id.includes(search);
+        break;
+    case "2":
+        var testExist=nom1.includes(search);
+        break;
+    case "3":
+        var testExist=nom2.includes(search);
+        break;
+    case "4":
+        var testExist=emphra.includes(search);
+        break;
+    case "5":
+        var testExist=atc1.includes(search);
+        break;
+    case "6":
+        var testExist=atc2.includes(search);
+        break;
+    case "7":
+        var testExist=pharma.includes(search);
+        break;
+        }; 
+      
+      
+      if (testExist==true){
+          
+          
+            svg.selectAll("g.tick").remove(); 
+            svg.selectAll("path.line1").remove();  
+            svg.selectAll("path.line2").remove();  
+            svg.selectAll("path.line3").remove();  
+
+
+
+          
+          drawGraph(val,search);
+          
+      }else{
+        svg.selectAll("g.tick").remove(); 
+svg.selectAll("path.line1").remove();  
+            svg.selectAll("path.line2").remove();  
+            svg.selectAll("path.line3").remove();            
+      };
+    
+  };
+
+    
+    
+    
+
+    function  switcher(val){
+//       console.log(val);
+    selector = val;
+      
+        if(graphtest == true){
+        
+//        REDRAW
+            
+//            A VOIR POUR POURCENTAGES
+        
+        };
+    };  
+    
+    
+
+
+function drawGraph(type,value) {
+    
+    switch(type) {
+    case "1":
+        var index="id";
+        break;
+    case "2":
+        var index="n1";
+        break;
+    case "3":
+        var index="n2";
+        break;
+    case "4":
+        var index="e";
+        break;
+    case "5":
+        var index="a1";
+        break;
+    case "6":
+        var index="a2";
+        break;
+    case "7":
+        var index="p";
+        break;
+        }; 
+//    
+//    
+//        console.log(type);
+//            console.log(value);
+//        console.log(index);
+//
+
+    
+    
+    
+          var linechart  = document.getElementById("linechart"); 
+var rect = linechart.getBoundingClientRect(); 
+    
+      var widthGraph = parseInt(rect.width);
+    var heightGraph = parseInt(rect.height);
+    
+//    console.log(widthGraph);
+//        console.log(heightGraph);
+
+    
+    
+    var margin = {top: 20, right: 80, bottom: 30, left: 70};
+   var  width = widthGraph - margin.left - margin.right;
+    var height = heightGraph - margin.top - margin.bottom;
+    
+    
+    var x = d3.scaleTime().range([0, width-300]);
+var y1 = d3.scaleLinear().range([height-20, 0]);
+    var y2 = d3.scaleLinear().range([height-20, 0]);
+var y3 = d3.scaleLinear().range([height-20, 0]);
+    
+    
+    
+    
+    var referencesFiltered =references.filter(function(d){{if(d[index] == value){return d}}});
+    
+//    console.log(referencesFiltered);
+    
+    
+    var dbFiltered = [];
+    
+    referencesFiltered.forEach(function(d){
+        dbFiltered.push(dbtotal[d.id]);  
+    });                                                                                                
+    
+    var dataFin = {"total":[],"rembour":[],"boites":[]};
+                                                          
+    var keys = Object.keys(dbFiltered[0]);
+    
+//    console.log(keys);
+    
+    var dates = keys.map(function(i){
+        return parseTime(i)});
+    
+    keys.forEach(function(d,i){
+        
+        dataFin.total.push({"d":dates[i],"v":d3.sum(dbFiltered, (o) => o[d][0])});
+        dataFin.rembour.push({"d":dates[i],"v":d3.sum(dbFiltered, (o) => o[d][2])});
+        dataFin.boites.push({"d":dates[i],"v":d3.sum(dbFiltered, (o) => o[d][1])});
+        
+    });
+    
+    
+//        console.log(dataFin);
+
+    
+
+
+var valueline1 = d3.line()
+    .curve(d3.curveBasis)
+    .x(function(d,i) { return x(d.d); })
+    .y(function(d,i) { return y1(d.v); });
+
+var valueline2 = d3.line()
+    .curve(d3.curveBasis)
+    .x(function(d,i) { return x(d.d); })
+    .y(function(d,i) { return y1(d.v); });
+    
+    var valueline3 = d3.line()
+    .curve(d3.curveBasis)
+    .x(function(d,i) { return x(d.d); })
+    .y(function(d,i) { return y3(d.v); });
+    
+    
+    
+    
+    
+    
+    
+    svg.style("position","relative")
+            .style("top","100px")
+            .style("left","0px")
+    .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")"); 
+    
+    
+
+    x.domain(d3.extent(dates, (d) => d));
+                                                                                                                    
+                                                          
+                                        
+        y1.domain([0,d3.max(dataFin.total, (i) => i.v)]);
+        console.log(d3.max(dataFin.total, (i) => i.v));
+        
+        svg.append("path")
+      .data([dataFin.total])
+      .attr("class", "line1")
+      .attr("d", valueline1)
+    .attr("transform", "translate(300,20)");
+         
+                                                          
+        y2.domain([0,d3.max(dataFin.rembour, (i) => i.v)]);
+        console.log(d3.max(dataFin.rembour, (i) => i.v)); 
+        
+        svg.append("path")
+      .data([dataFin.rembour])
+      .attr("class", "line2")
+      .attr("d", valueline2)
+    .attr("transform", "translate(300,20)");
+        
+                                                          
+         y3.domain([0,d3.max(dataFin.boites, (i) => i.v)]);
+        console.log(d3.max(dataFin.boites, (i) => i.v));
+        
+        svg.append("path")
+      .data([dataFin.boites])
+      .attr("class", "line3")
+      .attr("d", valueline3)
+    .attr("transform", "translate(300,20)");
+        
+        
+                                                          
+    
+  svg.append("g")
+      .attr("transform", "translate(300," + height + ")")
+  .attr("class", "axis axis--x")
+      .call(d3.axisBottom(x));
+
+//  svg.append("g")
+//      .call(d3.axisLeft(y));
+//    
+//    
+    
+    
+      svg.append("g")
+  .attr("class", "axis axis--y1")
+//    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .attr("transform", "translate(100,20)")
+      .call(d3.axisLeft(y1))
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("fill", "#000")
+      .text("Total depenses, Euro")
+      .style("fill", "blue"); 
+    
+    
+//    MEME AXE QUE LE TOTAL => 2 AXES SEULEMENT
+    
+       svg.append("g")
+  .attr("class", "axis axis--y2")
+//    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .attr("transform", "translate(200,20)")
+      .call(d3.axisLeft(y1))
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("fill", "#000")
+      .text("Remboursements, Euro")
+        .style("fill", "red"); 
+    
+       svg.append("g")
+  .attr("class", "axis axis--y")
+//    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    .attr("transform", "translate(300,20)")
+      .call(d3.axisLeft(y3))
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("fill", "#000")
+      .text("Boites remboursees")
+       .style("fill", "green"); 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  
+  };
+
+    
+    
+    
+    
+    
+       function initAutocomplete() {
+           
+           $( "#tag1" ).autocomplete({
+      minLength: 5,
+    source: function( request, response ) {        
+            var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+             response( $.grep( id, function( item ){
+                 return matcher.test( item );
+             }) );},
+      focus: function( event, ui ) {
+        $( "#tag1" ).val( ui.item.label );
+        return false;
+      },
+      select: function( event, ui ) {
+        $( "#tag1" ).val( ui.item.label );
+        return false;
+      }
+    });    
+                        
+                $( "#tag2" ).autocomplete({
+      minLength: 2,
+    source: function( request, response ) {        
+            var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+             response( $.grep( nom1, function( item ){
+                 return matcher.test( item );
+             }) );},
+      focus: function( event, ui ) {
+        $( "#tag2" ).val( ui.item.label );
+        return false;
+      },
+      select: function( event, ui ) {
+        $( "#tag2" ).val( ui.item.label );
+        return false;
+      }
+    });    
+           
+                $( "#tag3" ).autocomplete({
+      minLength: 2,
+    source: function( request, response ) {        
+            var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+             response( $.grep( nom2, function( item ){
+                 return matcher.test( item );
+             }) );},
+      focus: function( event, ui ) {
+        $( "#tag3" ).val( ui.item.label );
+        return false;
+      },
+      select: function( event, ui ) {
+        $( "#tag3" ).val( ui.item.label );
+        return false;
+      }
+    });    
+           
+                $( "#tag4" ).autocomplete({
+      minLength: 2,
+    source: function( request, response ) {        
+            var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+             response( $.grep( emphra, function( item ){
+                 return matcher.test( item );
+             }) );},
+      focus: function( event, ui ) {
+        $( "#tag4" ).val( ui.item.label );
+        return false;
+      },
+      select: function( event, ui ) {
+        $( "#tag4" ).val( ui.item.label );
+        return false;
+      }
+    });    
+           
+                $( "#tag5" ).autocomplete({
+      minLength: 2,
+    source: function( request, response ) {        
+            var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+             response( $.grep( atc1, function( item ){
+                 return matcher.test( item );
+             }) );},
+      focus: function( event, ui ) {
+        $( "#tag5" ).val( ui.item.label );
+        return false;
+      },
+      select: function( event, ui ) {
+        $( "#tag5" ).val( ui.item.label );
+        return false;
+      }
+    });    
+           
+           
+           
+            
+    $( "#tag6" ).autocomplete({
+      minLength: 2,
+    source: function( request, response ) {        
+            var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+             response( $.grep( atc2, function( item ){
+                 return matcher.test( item );
+             }) );},
+      focus: function( event, ui ) {
+        $( "#tag6" ).val( ui.item.label );
+        return false;
+      },
+      select: function( event, ui ) {
+        $( "#tag6" ).val( ui.item.label );
+        return false;
+      }
+    });    
+           
+                $( "#tag7" ).autocomplete({
+      minLength: 2,
+    source: function( request, response ) {        
+            var matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( request.term ), "i" );
+             response( $.grep( pharma, function( item ){
+                 return matcher.test( item );
+             }) );},
+      focus: function( event, ui ) {
+        $( "#tag7" ).val( ui.item.label );
+        return false;
+      },
+      select: function( event, ui ) {
+        $( "#tag7" ).val( ui.item.label );
+        return false;
+      }
+    });    
+
+};     
+        
+    
+
+function emptyField(){
+        
+document.getElementById("tag1").value = '';
+document.getElementById("tag2").value = '';
+document.getElementById("tag3").value = '';
+document.getElementById("tag4").value = '';
+document.getElementById("tag5").value = '';
+document.getElementById("tag6").value = '';
+document.getElementById("tag7").value = '';
+    
+};
+    
+    
+    
+    
+    
+    
+    
+    
+
+</script>
+    
+
+<div id="suche1">   
+    <form>
+  <input list="tags1" name="tag1" id="tag1" placeholder="CIP13" value="" onclick="emptyField()">
+<!--  <datalist id="tags1"></datalist>-->
+<button id="reset" type="button" value="1" onclick="search(this.value,tag1.value)">Show</button>
+</form>
+</div>  
+    
+<div id="suche2">   
+    <form>
+  <input list="tags2" name="tag2" id="tag2" placeholder="Nom complet" value="" onclick="emptyField()">
+<!--  <datalist id="tags2"></datalist>-->
+<button id="reset" type="button" value="2" onclick="search(this.value,tag2.value)">Show</button>
+</form>
+</div>  
+    
+<div id="suche3">   
+    <form>
+  <input list="tags3" name="tag3" id="tag3" placeholder="Produit" value="" onclick="emptyField()">
+<!--  <datalist id="tags3"></datalist>-->
+<button id="reset" type="button" value="3" onclick="search(this.value,tag3.value)">Show</button>
+</form>
+</div>  
+    
+<div id="suche4">   
+    <form>
+  <input list="tags4" name="tag4" id="tag4" placeholder="EphMRA" value="" onclick="emptyField()">
+<!--  <datalist id="tags4"></datalist>-->
+<button id="reset" type="button" value="4" onclick="search(this.value,tag4.value)">Show</button>
+</form>
+</div>  
+    
+<div id="suche5">   
+    <form>
+  <input list="tags5" name="tag5" id="tag5" placeholder="ATC" value="" onclick="emptyField()">
+<!--  <datalist id="tags5"></datalist>-->
+<button id="reset" type="button" value="5" onclick="search(this.value,tag5.value)">Show</button>
+</form>
+</div>  
+    
+<div id="suche6">   
+    <form>
+  <input list="tags6" name="tag6" id="tag6" placeholder="ATC2" value="" onclick="emptyField()">
+<!--  <datalist id="tags6"></datalist>-->
+<button id="reset" type="button" value="6" onclick="search(this.value,tag6.value)">Show</button>
+</form>
+</div>  
+
+<div id="suche7">   
+    <form>
+  <input list="tags7" name="tag7" id="tag7" placeholder="Pharma" value="" onclick="emptyField()">
+<!--  <datalist id="tags7"></datalist>-->
+<button id="reset" type="button" value="7" onclick="search(this.value,tag7.value)">Show</button>
+</form>
+</div>  
+    
+    
+    
+
+    
+</body>
